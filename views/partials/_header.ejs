@@ -2,8 +2,9 @@
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
     <form method="POST" action="/login">
+      Currently logged in as: <%= username %>
       <input type="text" name="username" id="username" value="">
-      <input type="submit" value="login">
+      <input type="submit" value="Log in">
     </form>
     <button
       class="navbar-toggler"
