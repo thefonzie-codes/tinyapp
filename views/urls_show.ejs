@@ -20,7 +20,16 @@
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
-        <p> <form method="POST" action="/urls/<%= id %>/delete"><input type="submit" value="Delete" ></form> </p>
+        <p>
+          <form method="POST" action="/urls/<%= id %>">
+            <label for="longURL">Change Long URL</label>
+            <input type="text" name="longURL" id="longURL" value="<%= urlDatabase[id] %>">
+            <input type="submit" value="Update" >
+          </form> 
+          </p>
+          <p> 
+          <form method="POST" action="/urls/<%= id %>/delete"><input type="submit" value="Delete" ></form> 
+        </p>
       </div>
       <div class="card-footer text-muted"></div>
     </div>

@@ -30,16 +30,16 @@ app.get('/urls', (req, res) => {
 
 app.post('/urls', (req, res) => {
   const longURL = req.body.longURL;
-  const id = generateRandomString()
-  urlDatabase[id] = longURL
+  const id = generateRandomString();
+  urlDatabase[id] = longURL;
   res.redirect(`/urls/${id}`);
-})
+});
 
 // directs you to the creation page for new urls
 
-app.get('/urls/new', (req,res) => { 
-  res.render('urls_new')
-})
+app.get('/urls/new', (req,res) => {
+  res.render('urls_new');
+});
 
 // directs you to the specified new url's shortened page
 
@@ -48,25 +48,34 @@ app.get('/urls/:id', (req,res) => {
   const templateVars = { id: req.params.id, urlDatabase: urlDatabase };
   console.log(id);
   res.render('urls_show', templateVars);
-})
+});
 
 // deletes the specified url
 
 app.post('/urls/:id/delete', (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   delete urlDatabase[id];// deconstrutcted way to assign id = req.params.id
-  res.redirect('/urls')
+  res.redirect('/urls');
+});
+
+// updates specified URL
+
+app.post('/urls/:id/', (req, res) => {
+  const { longURL } = req.body;
+  const { id } = req.params;
+  urlDatabase[id] = longURL;
+  console.log(urlDatabase);
 })
 
 app.get('/u/:id', (req,res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   let longURL = urlDatabase[req.params.id];
-  if (!longURL.startsWith('http')){
-    longURL = `http://${longURL}`
+  if (!longURL.startsWith('http')) {
+    longURL = `http://${longURL}`;
   }
   console.log(req.params);
   res.redirect(longURL);
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
