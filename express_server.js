@@ -28,7 +28,6 @@ app.get('/urls', (req, res) => {
     urls: urlDatabase,
     username: req.cookies.username
   };
-  console.log(templateVars.username);
   res.render('urls_index'/*file name in views folder*/, templateVars);
 });
 
@@ -52,7 +51,6 @@ app.get('/urls/new', (req,res) => {
 app.get('/urls/:id', (req,res) => {
   const { id } = req.params;
   const templateVars = { id: req.params.id, urlDatabase: urlDatabase };
-  console.log(id);
   res.render('urls_show', templateVars);
 });
 
@@ -78,16 +76,21 @@ app.post('/urls/:id/', (req, res) => {
 app.post('/login', (req, res) => {
   const { username } = req.body;
   res.cookie('username', username);
-  console.log('Cookie created for: ', username);
   res.redirect('/urls')
 ;})
+
+// logs user out and clears created cookie
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username')
+  res.redirect('/urls')
+})
 
 app.get('/u/:id', (req,res) => {
   let longURL = urlDatabase[req.params.id];
   if (!longURL.startsWith('http')) {
     longURL = `http://${longURL}`;
   }
-  console.log(req.params);
   res.redirect(longURL);
 });
 
