@@ -64,11 +64,19 @@ app.post('/urls/:id/', (req, res) => {
   const { longURL } = req.body;
   const { id } = req.params;
   urlDatabase[id] = longURL;
-  console.log(urlDatabase);
+  res.redirect('/urls')
 })
 
+// creates a cookie
+
+app.post('/login', (req, res) => {
+  const { username } = req.body;
+  res.cookie('username', username);
+  console.log('Cookie created for: ', username);
+  res.redirect('/urls')
+;})
+
 app.get('/u/:id', (req,res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   let longURL = urlDatabase[req.params.id];
   if (!longURL.startsWith('http')) {
     longURL = `http://${longURL}`;
