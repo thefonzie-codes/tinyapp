@@ -43,14 +43,15 @@ app.post('/urls', (req, res) => {
 // directs you to the creation page for new urls
 
 app.get('/urls/new', (req,res) => {
-  res.render('urls_new');
+  username = req.cookies.username
+  res.render('urls_new', { username });
 });
 
 // directs you to the specified new url's shortened page
 
 app.get('/urls/:id', (req,res) => {
   const { id } = req.params;
-  const templateVars = { id: req.params.id, urlDatabase: urlDatabase };
+  const templateVars = { id: req.params.id, urlDatabase: urlDatabase , username: req.cookies.username};
   res.render('urls_show', templateVars);
 });
 
@@ -88,10 +89,11 @@ app.post('/logout', (req, res) => {
 
 app.get('/u/:id', (req,res) => {
   let longURL = urlDatabase[req.params.id];
+  username: req.cookies.username;
   if (!longURL.startsWith('http')) {
     longURL = `http://${longURL}`;
   }
-  res.redirect(longURL);
+  res.redirect(longURL,{ username });
 });
 
 app.listen(PORT, () => {
