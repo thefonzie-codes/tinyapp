@@ -1,6 +1,8 @@
 const express = require('express');
 const app =  express();
 const PORT = 8080; // default port 8080
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 const generateRandomString = () => Math.random().toString(36).slice(2, 8);
 
@@ -22,7 +24,10 @@ app.get('/', (req, res) => { // app.get will display a page based on the path. '
 // goes to the urls page that contains all the urls and shortened versions
 
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies.username
+  };
   res.render('urls_index'/*file name in views folder*/, templateVars);
 });
 
@@ -46,7 +51,6 @@ app.get('/urls/new', (req,res) => {
 app.get('/urls/:id', (req,res) => {
   const { id } = req.params;
   const templateVars = { id: req.params.id, urlDatabase: urlDatabase };
-  console.log(id);
   res.render('urls_show', templateVars);
 });
 
@@ -72,16 +76,21 @@ app.post('/urls/:id/', (req, res) => {
 app.post('/login', (req, res) => {
   const { username } = req.body;
   res.cookie('username', username);
-  console.log('Cookie created for: ', username);
   res.redirect('/urls')
 ;})
+
+// logs user out and clears created cookie
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username')
+  res.redirect('/urls')
+})
 
 app.get('/u/:id', (req,res) => {
   let longURL = urlDatabase[req.params.id];
   if (!longURL.startsWith('http')) {
     longURL = `http://${longURL}`;
   }
-  console.log(req.params);
   res.redirect(longURL);
 });
 
