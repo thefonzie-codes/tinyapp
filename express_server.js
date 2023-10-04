@@ -4,6 +4,7 @@ const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
 const { generateRandomString } = require('./helpers.js');
 const { createNewUser } = require('./helpers.js')
+const { returnIdFromEmail } = require('./helpers.js')
 const { users } = require('./users.js')
 
 app.use(cookieParser());
@@ -27,7 +28,8 @@ app.get('/', (req, res) => { // app.get will display a page based on the path. '
 app.get('/urls', (req, res) => {
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies.username
+    userId: req.cookies.id,
+    users,
   };
   res.render('urls_index'/*file name in views folder*/, templateVars);
 });
@@ -36,23 +38,31 @@ app.get('/urls', (req, res) => {
 
 app.post('/urls', (req, res) => {
   const longURL = req.body.longURL;
-  const id = generateRandomString();
-  urlDatabase[id] = longURL;
+  const URLid = generateRandomString();
+  urlDatabase[URLid] = longURL;
   res.redirect(`/urls/${id}`);
 });
 
 // directs you to the creation page for new urls
 
 app.get('/urls/new', (req,res) => {
-  username = req.cookies.username
-  res.render('urls_new', { username });
+  const templateVars = { 
+    urls: urlDatabase,
+    userId: req.cookies.id,
+    users,
+  };
+  res.render('urls_new', templateVars);
 });
 
 // directs you to the specified new url's shortened page
 
 app.get('/urls/:id', (req,res) => {
-  const { id } = req.params;
-  const templateVars = { id: req.params.id, urlDatabase: urlDatabase , username: req.cookies.username};
+  const templateVars = { 
+    id: req.params.id, 
+    urlDatabase: urlDatabase,   
+    userId: req.cookies.id,
+    users
+  };
   res.render('urls_show', templateVars);
 });
 
@@ -76,8 +86,10 @@ app.post('/urls/:id/', (req, res) => {
 // creates a cookie
 
 app.post('/login', (req, res) => {
-  const { username } = req.body;
-  res.cookie('username', username);
+  const { email } = req.body;
+  const id = returnIdFromEmail(users, email);
+  console.log(id);
+  res.cookie('id', users[id]);
   res.redirect('/urls')
 ;})
 
@@ -91,25 +103,48 @@ app.post('/logout', (req, res) => {
 // User registration functionality
 
 app.get('/register', (req, res) => {
-  username = req.cookies.username
-  res.render('register')
+  templateVars = { users, userId: ""}
+  res.render('register', templateVars)
 })
 
+
 app.post('/register', (req, res) => {
-  username = req.cookies.username
+  
+  if (!req.body.email) {
+    res.statusMessage ='E-mail required';
+    res.send(400, '400 Error: email required');
+  };
+  
+  if (!req.body.password) {
+    res.statusMessage ='password required';
+    res.send(400, '400 error: password required');
+  };
+  
   const newUser = createNewUser(req.body);
-  users[newUser.id] = newUser;
+  const userId = newUser.id;
+  users[userId] = newUser.newUser;
   console.log(users);
-  res.redirect('/urls')
+  res.cookie('id', userId)
+  res.redirect('/urls');
+})
+
+//Login Form
+
+app.get('/login', (req, res) => {
+  templateVars = { users, userId: ""}
+  res.render('login', templateVars)
 })
 
 app.get('/u/:id', (req,res) => {
-  let longURL = urlDatabase[req.params.id];
-  username: req.cookies.username;
-  if (!longURL.startsWith('http')) {
-    longURL = `http://${longURL}`;
+  const templateVars = {
+    userId: req.cookies.id,
+    users,
+    longURL: urlDatabase[req.params.id]
+    // if (!longURL.startsWith('http')) {
+    //   longURL = `http://${longURL}`;
+    // }
   }
-  res.redirect(longURL,{ username });
+  res.redirect(longURL, templateVars);
 });
 
 app.listen(PORT, () => {

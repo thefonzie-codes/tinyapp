@@ -1,14 +1,14 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
-    <% if (!username){ %>
+    <% if (!userId){ %>
       <form method="POST" action="/login">
         <input type="text" name="username" id="username" value="">
         <input type="submit" value="Log in">
       </form>
       <% } else { %>
       <form method="POST" action="/logout">
-        Currently logged in as: <%= username %> <input type="submit" value="Log out">
+        Currently logged in as: <%= users[userId].email %> <input type="submit" value="Log out">
       </form>
       <% } %>
     <button
