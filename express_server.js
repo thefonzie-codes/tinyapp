@@ -2,13 +2,12 @@ const express = require('express');
 const app =  express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
-app.use(cookieParser());
+const generateRandomString = require('./helpers.js');
 
-const generateRandomString = () => Math.random().toString(36).slice(2, 8);
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 app.set('view engine', 'ejs');
-
-app.use(express.urlencoded({ extended: true }));
 
 // URL Database
 
@@ -85,6 +84,11 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) => {
   res.clearCookie('username')
   res.redirect('/urls')
+})
+
+app.get('/register', (req, res) => {
+  username = req.cookies.username
+  res.render('register')
 })
 
 app.get('/u/:id', (req,res) => {
