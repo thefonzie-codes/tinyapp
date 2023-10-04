@@ -2,7 +2,9 @@ const express = require('express');
 const app =  express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
-const generateRandomString = require('./helpers.js');
+const { generateRandomString } = require('./helpers.js');
+const { createNewUser } = require('./helpers.js')
+const { users } = require('./users.js')
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -86,9 +88,19 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls')
 })
 
+// User registration functionality
+
 app.get('/register', (req, res) => {
   username = req.cookies.username
   res.render('register')
+})
+
+app.post('/register', (req, res) => {
+  username = req.cookies.username
+  const newUser = createNewUser(req.body);
+  users[newUser.id] = newUser;
+  console.log(users);
+  res.redirect('/urls')
 })
 
 app.get('/u/:id', (req,res) => {
