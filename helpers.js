@@ -1,12 +1,36 @@
 // TEST OBJ
 
 const users = {
+  xlt42x: {
+    id: "xlt42x",
+    email: "123@123",
+    password: "3046",
+  },
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
   }
 };
+
+const urlDatabase = {
+  b2xVn2: {
+    longURL: 'http://www.lighthouselabs.ca',
+    userID: "xlt42x"
+  },
+  '9sm5xK': {
+    longURL: 'http://www.google.com',
+    userID: 'userRandomID'
+  },
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "xlt42x"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: 'userRandomID'
+  },
+}
 
 //
 
@@ -52,7 +76,31 @@ const createNewUser = (obj, input) => {
   return { errStatus: null, errMsg: null, id: newId, newUser }
 };
 
+const shortUrlExists = (obj, input) => {
 
+  for (let each in obj) {
+    if (each === input) {
+    return { errStatus: null, errMsg: null, id: input }
+    }
+  }
+  return { errStatus: 403, errMsg: 'Short URL does not exist.', id: input }
+}
+
+
+const authenticated = (input) => {
+  if (input) {
+    return { errStatus: null, errMsg: null, id: input }
+  };
+
+  return { errStatus: 403, errMsg: 'Only registered users can perform this action. Please log in.', id: input }
+};
+
+const ownedBy = (urlId, userId) => {
+  if (urlDatabase[urlId].userID === userId){
+    return { errStatus: null, errMsg: null, id: userId }
+  }
+  return { errStatus: 403, errMsg: 'Only the owner can edit the URL', id: userId }
+}
 
 
 const login = (obj, input) => {
@@ -77,7 +125,5 @@ const login = (obj, input) => {
   return { errStatus: null, errMsg: null, id }
 }
 
-console.log(createNewUser(users, {email: "123@example.com",
-password: "purple-monkey-dinosaur"}));
 
-module.exports = { generateRandomString, createNewUser, returnIdFromEmail, login }
+module.exports = { generateRandomString, createNewUser, returnIdFromEmail, login, shortUrlExists, authenticated, ownedBy }
