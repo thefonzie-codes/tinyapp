@@ -1,14 +1,21 @@
 const express = require('express');
 const app =  express();
 const PORT = 8080; // default port 8080
-const cookieParser = require('cookie-parser');
-const { generateRandomString, createNewUser, login, shortUrlExists, authenticated, ownedBy } = require('./helpers.js');
+const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session');
+const { generateRandomString, createNewUser, login, shortUrlExists, authenticated, ownedBy, returnIdFromEmail } = require('./helpers.js');
 const { users } = require('./users.js')
 
-app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 app.set('view engine', 'ejs');
+
+app.use(cookieSession({
+  name: 'user_id',
+  keys: ['jkasdhfjka', "1ifai4w532", "41234jfa"]
+}));
+
+
 
 // URL Database
 
@@ -39,7 +46,9 @@ app.get('/', (req, res) => { // app.get will display a page based on the path. '
 
 app.get('/urls', (req, res) => {
 
-  const auth = authenticated(req.cookies.user_id)
+  console.log(req.session.user_id)
+
+  const auth = authenticated(req.session.user_id)
   if (auth.errMsg){
     res.status(auth.errStatus).send(auth.errMsg).end()
   }
@@ -59,25 +68,24 @@ app.get('/urls', (req, res) => {
     return owned
   };
 
-
   const templateVars = { 
-    urls: ownedUrls(urlDatabase, req.cookies.user_id),
-    userId: req.cookies.user_id,
+    urls: ownedUrls(urlDatabase, req.session.user_id),
+    userId: req.session.user_id,
     users,
   };
   console.log(templateVars.urls)
-  res.render('urls_index'/*file name in views folder*/, templateVars);
+  res.render('urls_index', templateVars);
 });
 
 // creates a new url and then redirects you to /urls/id
 
 app.post('/urls', (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.send("You cannot shorten URLs without being logged in.")
   }
   const templateVars = {
     urls: urlDatabase,
-    userId: req.cookies.user_id,
+    userId: req.session.user_id,
     users,
   }
   const longURL = req.body.longURL;
@@ -89,12 +97,12 @@ app.post('/urls', (req, res) => {
 // directs you to the creation page for new urls
 
 app.get('/urls/new', (req,res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.redirect('/login')
   }
   const templateVars = { 
     urls: urlDatabase,
-    userId: req.cookies.user_id,
+    userId: req.session.user_id,
     users,
   };
   res.render('urls_new', templateVars);
@@ -110,8 +118,8 @@ app.get('/urls/:id', (req,res) => {
     res.status(exists.errStatus).send(exists.errMsg).end()
   }
 
-  const auth = authenticated(req.cookies.user_id)
-  const owned = ownedBy(req.params.id, req.cookies.user_id)
+  const auth = authenticated(req.session.user_id)
+  const owned = ownedBy(req.params.id, req.session.user_id)
   
   if (auth.errMsg){
     res.status(auth.errStatus).send(auth.errMsg).end()
@@ -124,7 +132,7 @@ app.get('/urls/:id', (req,res) => {
   const templateVars = { 
     id: req.params.id, 
     urlDatabase: urlDatabase,   
-    userId: req.cookies.user_id,
+    userId: req.session.user_id,
     users
   };
   res.render('urls_show', templateVars);
@@ -133,8 +141,8 @@ app.get('/urls/:id', (req,res) => {
 // deletes the specified url
 
 app.post('/urls/:id/delete', (req, res) => {
-  const auth = authenticated(req.cookies.user_id)
-  const owned = ownedBy(req.params.id, req.cookies.user_id)
+  const auth = authenticated(req.session.user_id)
+  const owned = ownedBy(req.params.id, req.session.user_id)
 
   if (auth.errMsg){
     res.status(auth.errStatus).send(auth.errMsg).end()
@@ -160,6 +168,7 @@ app.post('/logout', (req, res) => {
 // User registration functionality
 
 app.get('/register', (req, res) => {
+  
   templateVars = { users, userId: ""}
   if(templateVars.userId) {
     res.redirect('/urls', templateVars)
@@ -178,7 +187,8 @@ app.post('/register', (req, res) => {
 
   const user_id = newUser.id;
   users[user_id] = newUser.newUser;
-  res.cookie('user_id', user_id)
+  console.log(users);
+  req.session.user_id = user_id
   res.redirect('/urls');
 })
 
@@ -188,7 +198,7 @@ app.get('/login', (req, res) => {
   templateVars = { 
     id: req.params.id, 
     urlDatabase: urlDatabase,   
-    userId: req.cookies.user_id,
+    userId: req.session.user_id,
     users
   }
   if(templateVars.userId) {
@@ -198,13 +208,30 @@ app.get('/login', (req, res) => {
 })
 
 app.post('/login', (req, res) => {
-  const userId = login(users, req.body);
   
-  if (userId.errStatus) {
-    res.send(userId.errStatus, userId.errMsg)
+  const password = req.body.password;
+  const email = req.body.email;
+  const foundUser = returnIdFromEmail(users, email)
+  const savedPassword = users[foundUser].password
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  console.log(foundUser, password, email, savedPassword, hashedPassword)
+
+  const checkPassword = bcrypt.compareSync(password, savedPassword);
+
+  if (!email || !password){
+    return res.status(400).send("Please provide an email and password.")
   }
 
-  res.cookie('user_id', userId.id);
+  if (!foundUser){
+    return res.status(400).send("No user with that email found")
+  }
+
+  if (!checkPassword){
+    return res.status(400).send("Incorrect password")
+  }
+
+  req.session.user_id = foundUser;
   res.redirect('/urls');
 ;})
 
@@ -214,8 +241,8 @@ app.post('/login', (req, res) => {
 
 app.post('/urls/:id/', (req, res) => {
 
-  const auth = authenticated(req.cookies.user_id)
-  const owned = ownedBy(req.params.id, req.cookies.user_id)
+  const auth = authenticated(req.session.user_id)
+  const owned = ownedBy(req.params.id, req.session.user_id)
 
   if (auth.errMsg){
     res.status(auth.errStatus).send(auth.errMsg).end()
@@ -234,7 +261,7 @@ app.post('/urls/:id/', (req, res) => {
 
 app.get('/u/:id', (req,res) => {
   const templateVars = {
-    userId: req.cookies.user_id,
+    userId: req.session.user_id,
     users,
     longURL: urlDatabase[req.params.id].longURL,
     urls: urlDatabase,

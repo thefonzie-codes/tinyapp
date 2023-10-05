@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+
 // TEST OBJ
 
 const users = {
@@ -43,26 +45,26 @@ const returnIdFromEmail = (obj, email) => {
       return obj[id].id;
     }
   }
+  return undefined;
 }
 
 const createNewUser = (obj, input) => {
 
-  const inputEmail = input.email;
-  const inputPassword = input.password;
+  const email = input.email;
+  const password = bcrypt.hashSync(input.password, 10);
 
 
-  if (!inputEmail) {
+  if (!email) {
     return { errStatus: 403, errMsg: 'Email required', id:{}, newUser:{} }
   };
   
-  if (!inputPassword) {
+  if (!password) {
     return { errStatus: 403, errMsg: 'Password Required', id:{}, newUser:{} }
   };
 
   for (let id in obj) {
     const existingEmail = obj[id].email;
-    console.log(inputEmail)
-    if (existingEmail === inputEmail) {
+    if (existingEmail === email) {
     return { errStatus: 403, errMsg: 'Email already in use', id:{}, newUser:{} }
     }
   }
@@ -70,7 +72,8 @@ const createNewUser = (obj, input) => {
   const newId = generateRandomString();
   newUser = input[newId] = {
     newId,
-    ...input
+    email,
+    password
   }
 
   return { errStatus: null, errMsg: null, id: newId, newUser }
@@ -112,9 +115,9 @@ const login = (obj, input) => {
   }
 
   const userPassword = obj[id].password;
-  const inputPassword = input.password;
+  const password = input.password;
 
-  if (!inputPassword) {
+  if (!password) {
     return { errStatus: 403, errMsg: 'Password required', id}
   }
 
