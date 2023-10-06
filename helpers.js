@@ -1,41 +1,5 @@
 const bcrypt = require('bcryptjs');
 
-// TEST OBJ
-
-const users = {
-  xlt42x: {
-    id: "xlt42x",
-    email: "123@123",
-    password: "3046",
-  },
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  }
-};
-
-const urlDatabase = {
-  b2xVn2: {
-    longURL: 'http://www.lighthouselabs.ca',
-    userID: "xlt42x"
-  },
-  '9sm5xK': {
-    longURL: 'http://www.google.com',
-    userID: 'userRandomID'
-  },
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "xlt42x"
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: 'userRandomID'
-  },
-};
-
-//
-
 const generateRandomString = () => Math.random().toString(36).slice(2, 8);
 
 const returnIdFromEmail = (obj, email) => {
@@ -53,11 +17,11 @@ const createNewUser = (obj, input) => {
   const password = input.password;
   
   if (!email) {
-    return { errStatus: 403, errMsg: 'Email required', id:{}, newUser:{} };
+    return { errStatus: 400, errMsg: 'Email required', id:{}, newUser:{} };
   }
   
   if (!password) {
-    return { errStatus: 403, errMsg: 'Password Required', id:{}, newUser:{} };
+    return { errStatus: 400, errMsg: 'Password Required', id:{}, newUser:{} };
   }
   
   const hashedPassword = bcrypt.hashSync(input.password, 10);
@@ -65,7 +29,7 @@ const createNewUser = (obj, input) => {
   for (let id in obj) {
     const existingEmail = obj[id].email;
     if (existingEmail === email) {
-      return { errStatus: 403, errMsg: 'Email already in use', id:{}, newUser:{} };
+      return { errStatus: 400, errMsg: 'Email already in use', id:{}, newUser:{} };
     }
   }
 
@@ -103,8 +67,6 @@ const ownedBy = (obj ,urlId, loginId) => {
   }
   return { errStatus: 403, errMsg: 'Only the owner can edit the URL', id: loginId };
 };
-
-
 
 const ownedUrls = (urlDatabase, userId) => {
   const owned = {};

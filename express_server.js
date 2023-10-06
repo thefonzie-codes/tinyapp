@@ -19,7 +19,6 @@ app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
-//URL INDEX
 
 app.get('/urls', (req, res) => {
 
@@ -51,7 +50,7 @@ app.get('/urls/new', (req,res) => {
 
 app.post('/urls', (req, res) => {
 
-  if(!req.body.longURL){
+  if (!req.body.longURL) {
     return res.send("Field cannot be blank");
   }
   
@@ -59,7 +58,7 @@ app.post('/urls', (req, res) => {
     return res.send("You cannot shorten URLs without being logged in.");
   }
 
-  const longURL = req.body.longURL; 
+  const longURL = req.body.longURL;
   const urlId = generateRandomString();
   urlDatabase[urlId] = { longURL, userID: req.session.user_id };
   res.redirect(`/urls/${urlId}`);
@@ -146,8 +145,6 @@ app.post('/register', (req, res) => {
   res.redirect('/urls');
 });
 
-//Login Form
-
 app.get('/login', (req, res) => {
   const templateVars = {
     id: req.params.id,
@@ -186,8 +183,6 @@ app.post('/login', (req, res) => {
   req.session.user_id = foundUser;
   res.redirect('/urls');
 });
-
-// updates specified URL
 
 app.post('/urls/:id/', (req, res) => {
   const auth = authenticated(req.session.user_id);
