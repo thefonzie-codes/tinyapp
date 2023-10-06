@@ -51,9 +51,8 @@ const returnIdFromEmail = (obj, email) => {
 const createNewUser = (obj, input) => {
 
   const email = input.email;
-  const password = bcrypt.hashSync(input.password, 10);
-
-
+  const password = input.password;
+  
   if (!email) {
     return { errStatus: 403, errMsg: 'Email required', id:{}, newUser:{} };
   }
@@ -61,6 +60,8 @@ const createNewUser = (obj, input) => {
   if (!password) {
     return { errStatus: 403, errMsg: 'Password Required', id:{}, newUser:{} };
   }
+  
+  const hashedPassword = bcrypt.hashSync(input.password, 10);
 
   for (let id in obj) {
     const existingEmail = obj[id].email;
@@ -70,10 +71,10 @@ const createNewUser = (obj, input) => {
   }
 
   const newId = generateRandomString();
-  newUser = input[newId] = {
+  const newUser = input[newId] = {
     newId,
     email,
-    password
+    hashedPassword
   };
 
   return { errStatus: null, errMsg: null, id: newId, newUser };
@@ -88,7 +89,6 @@ const shortUrlExists = (obj, input) => {
   }
   return { errStatus: 403, errMsg: 'Short URL does not exist.', id: input };
 };
-
 
 const authenticated = (input) => {
   if (input) {
@@ -105,28 +105,6 @@ const ownedBy = (obj ,urlId, loginId) => {
   return { errStatus: 403, errMsg: 'Only the owner can edit the URL', id: loginId };
 };
 
-
-// const login = (obj, input) => {
-
-//   const id = returnIdFromEmail(obj, input.email);
-  
-//   if (!id) {
-//     return { errStatus: 403, errMsg: 'Email does not match any current user', id};
-//   }
-
-//   const userPassword = obj[id].password;
-//   const password = input.password;
-
-//   if (!password) {
-//     return { errStatus: 403, errMsg: 'Password required', id};
-//   }
-
-//   if (userPassword !== inputPassword) {
-//     return { errStatus: 403, errMsg: 'Username/password incorrect', id};
-//   }
-
-//   return { errStatus: null, errMsg: null, id };
-// };
 
 
 const ownedUrls = (urlDatabase, userId) => {

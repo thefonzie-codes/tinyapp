@@ -57,7 +57,7 @@ app.post('/urls', (req, res) => {
 
   const longURL = req.body.longURL; //
   const urlId = generateRandomString();
-  urlDatabase[urlId] = { longURL, userID: req.session.user_id }
+  urlDatabase[urlId] = { longURL, userID: req.session.user_id };
   res.redirect(`/urls/${urlId}`);
 });
 
@@ -109,17 +109,17 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  res.clearCookie('user_id', 'user_id.sig');
   res.redirect('/login');
 });
 
+
 app.get('/register', (req, res) => {
+  if (req.session.user_id) {
+    res.redirect('/urls');
+  }
   
   const templateVars = { users, userId: ""};
-  
-  if (templateVars.userId) {
-    res.redirect('/urls', templateVars);
-  }
 
   res.render('register', templateVars);
 });
@@ -149,7 +149,7 @@ app.get('/login', (req, res) => {
   };
 
   if (templateVars.userId) {
-    res.redirect('/urls', templateVars);
+    res.redirect('/urls');
   }
 
   res.render('login', templateVars);
@@ -159,9 +159,6 @@ app.post('/login', (req, res) => {
   const password = req.body.password;
   const email = req.body.email;
   const foundUser = returnIdFromEmail(users, email);
-  const savedPassword = users[foundUser].password;
-
-  const checkPassword = bcrypt.compareSync(password, savedPassword);
 
   if (!email || !password) {
     return res.status(400).send("Please provide an email and password.");
@@ -171,6 +168,9 @@ app.post('/login', (req, res) => {
     return res.status(400).send("No user with that email found");
   }
 
+  const savedPassword = users[foundUser].password;
+  const checkPassword = bcrypt.compareSync(password, savedPassword);
+
   if (!checkPassword) {
     return res.status(400).send("Incorrect password");
   }
@@ -178,8 +178,6 @@ app.post('/login', (req, res) => {
   req.session.user_id = foundUser;
   res.redirect('/urls');
 });
-
-/////
 
 // updates specified URL
 
