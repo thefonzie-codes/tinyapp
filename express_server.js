@@ -5,13 +5,14 @@ const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const { generateRandomString, createNewUser, login, shortUrlExists, authenticated, ownedBy, returnIdFromEmail } = require('./helpers.js');
 const { users } = require('./users.js')
+const { urlDatabase } = require('./urlDatabase')
 
 app.use(express.urlencoded({ extended: true }));
 
 app.set('view engine', 'ejs');
 
 app.use(cookieSession({
-  name: 'user_id',
+  name: 'user_id', 
   keys: ['jkasdhfjka', "1ifai4w532", "41234jfa"]
 }));
 
@@ -19,24 +20,7 @@ app.use(cookieSession({
 
 // URL Database
 
-const urlDatabase = {
-  b2xVn2: {
-    longURL: 'http://www.lighthouselabs.ca',
-    userID: "xlt42x"
-  },
-  '9sm5xK': {
-    longURL: 'http://www.google.com',
-    userID: 'userRandomID'
-  },
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "xlt42x"
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: 'userRandomID'
-  },
-}
+
 
 app.get('/', (req, res) => { // app.get will display a page based on the path. '/' is the home page
   res.send('Hello!');
@@ -45,8 +29,6 @@ app.get('/', (req, res) => { // app.get will display a page based on the path. '
 // goes to the urls page that contains all the urls and shortened versions
 
 app.get('/urls', (req, res) => {
-
-  console.log(req.session.user_id)
 
   const auth = authenticated(req.session.user_id)
   if (auth.errMsg){
@@ -73,7 +55,6 @@ app.get('/urls', (req, res) => {
     userId: req.session.user_id,
     users,
   };
-  console.log(templateVars.urls)
   res.render('urls_index', templateVars);
 });
 
@@ -187,7 +168,6 @@ app.post('/register', (req, res) => {
 
   const user_id = newUser.id;
   users[user_id] = newUser.newUser;
-  console.log(users);
   req.session.user_id = user_id
   res.redirect('/urls');
 })
@@ -213,9 +193,6 @@ app.post('/login', (req, res) => {
   const email = req.body.email;
   const foundUser = returnIdFromEmail(users, email)
   const savedPassword = users[foundUser].password
-  const hashedPassword = bcrypt.hashSync(password, 10);
-
-  console.log(foundUser, password, email, savedPassword, hashedPassword)
 
   const checkPassword = bcrypt.compareSync(password, savedPassword);
 
@@ -260,16 +237,10 @@ app.post('/urls/:id/', (req, res) => {
 })
 
 app.get('/u/:id', (req,res) => {
-  const templateVars = {
-    userId: req.session.user_id,
-    users,
-    longURL: urlDatabase[req.params.id].longURL,
-    urls: urlDatabase,
-    // if (!longURL.startsWith('http')) {
-    //   longURL = `http://${longURL}`;
-    // }
+  let longURL = urlDatabase[req.params.id].longURL
+  if (!longURL.startsWith('http')) {
+    longURL = `http://${longURL}`;
   }
-  const longURL = urlDatabase[req.params.id].longURL
   res.redirect(`${longURL}`);
 });
 
