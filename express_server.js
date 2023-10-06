@@ -1,56 +1,35 @@
 const express = require('express');
-const app =  express();
-const PORT = 8080; // default port 8080
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
-const { generateRandomString, createNewUser, login, shortUrlExists, authenticated, ownedBy, returnIdFromEmail } = require('./helpers.js');
-const { users } = require('./users.js')
-const { urlDatabase } = require('./urlDatabase')
+const { generateRandomString, createNewUser, shortUrlExists, authenticated, ownedBy, returnIdFromEmail, ownedUrls } = require('./helpers.js');
+const { users } = require('./users.js');
+const { urlDatabase } = require('./urlDatabase');
+
+const app =  express();
+const PORT = 8080;
 
 app.use(express.urlencoded({ extended: true }));
-
 app.set('view engine', 'ejs');
-
 app.use(cookieSession({
-  name: 'user_id', 
+  name: 'user_id',
   keys: ['jkasdhfjka', "1ifai4w532", "41234jfa"]
 }));
 
-
-
-// URL Database
-
-
-
-app.get('/', (req, res) => { // app.get will display a page based on the path. '/' is the home page
-  res.send('Hello!');
+app.get('/', (req, res) => {
+  res.redirect('/login');
 });
 
-// goes to the urls page that contains all the urls and shortened versions
+//URL INDEX
 
 app.get('/urls', (req, res) => {
 
-  const auth = authenticated(req.session.user_id)
-  if (auth.errMsg){
-    res.status(auth.errStatus).send(auth.errMsg).end()
+  const auth = authenticated(req.session.user_id);
+
+  if (auth.errMsg) {
+    res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
-  const ownedUrls = (urlDatabase, userId) => {
-    const owned = {};
-
-    for (let id in urlDatabase){
-      const urlUserId = urlDatabase[id].userID;
-      if (userId === urlUserId){
-        owned[id] = {
-          id,
-          ...urlDatabase[id]
-        }
-      }
-    }
-    return owned
-  };
-
-  const templateVars = { 
+  const templateVars = {
     urls: ownedUrls(urlDatabase, req.session.user_id),
     userId: req.session.user_id,
     users,
@@ -58,30 +37,11 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
-// creates a new url and then redirects you to /urls/id
-
-app.post('/urls', (req, res) => {
-  if (!req.session.user_id) {
-    res.send("You cannot shorten URLs without being logged in.")
-  }
-  const templateVars = {
-    urls: urlDatabase,
-    userId: req.session.user_id,
-    users,
-  }
-  const longURL = req.body.longURL;
-  const URLid = generateRandomString();
-  urlDatabase[URLid] = longURL;
-  res.redirect(`/urls/${id}`, templateVars);
-});
-
-// directs you to the creation page for new urls
-
 app.get('/urls/new', (req,res) => {
   if (!req.session.user_id) {
-    res.redirect('/login')
+    res.redirect('/login');
   }
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
     userId: req.session.user_id,
     users,
@@ -89,30 +49,40 @@ app.get('/urls/new', (req,res) => {
   res.render('urls_new', templateVars);
 });
 
-// directs you to the specified new url's shortened page
+app.post('/urls', (req, res) => {
+  
+  if (!req.session.user_id) {
+    res.send("You cannot shorten URLs without being logged in.");
+  }
+
+  const longURL = req.body.longURL; //
+  const urlId = generateRandomString();
+  urlDatabase[urlId] = { longURL, userID: req.session.user_id }
+  res.redirect(`/urls/${urlId}`);
+});
 
 app.get('/urls/:id', (req,res) => {
   
-  const exists = shortUrlExists(urlDatabase, req.params.id)
+  const exists = shortUrlExists(urlDatabase, req.params.id);
 
-  if(exists.errMsg){
-    res.status(exists.errStatus).send(exists.errMsg).end()
+  if (exists.errMsg) {
+    res.status(exists.errStatus).send(exists.errMsg).end();
   }
 
-  const auth = authenticated(req.session.user_id)
-  const owned = ownedBy(req.params.id, req.session.user_id)
-  
-  if (auth.errMsg){
-    res.status(auth.errStatus).send(auth.errMsg).end()
+  const auth = authenticated(req.session.user_id);
+  const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
+
+  if (auth.errMsg) {
+    res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
-  if (owned.errMsg){
-    res.status(owned.errStatus).send(owned.errMsg).end()
+  if (owned.errMsg) {
+    res.status(owned.errStatus).send(owned.errMsg).end();
   }
 
-  const templateVars = { 
-    id: req.params.id, 
-    urlDatabase: urlDatabase,   
+  const templateVars = {
+    id: req.params.id,
+    urlDatabase: urlDatabase,
     userId: req.session.user_id,
     users
   };
@@ -122,15 +92,15 @@ app.get('/urls/:id', (req,res) => {
 // deletes the specified url
 
 app.post('/urls/:id/delete', (req, res) => {
-  const auth = authenticated(req.session.user_id)
-  const owned = ownedBy(req.params.id, req.session.user_id)
+  const auth = authenticated(req.session.user_id);
+  const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
 
-  if (auth.errMsg){
-    res.status(auth.errStatus).send(auth.errMsg).end()
+  if (auth.errMsg) {
+    res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
-  if (owned.errMsg){
-    res.status(owned.errStatus).send(owned.errMsg).end()
+  if (owned.errMsg) {
+    res.status(owned.errStatus).send(owned.errMsg).end();
   }
 
   const { id } = req.params;
@@ -138,106 +108,102 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-
-// logs user out and clears created cookie
-
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id')
-  res.redirect('/login')
-})
-
-// User registration functionality
+  res.clearCookie('user_id');
+  res.redirect('/login');
+});
 
 app.get('/register', (req, res) => {
   
-  templateVars = { users, userId: ""}
-  if(templateVars.userId) {
-    res.redirect('/urls', templateVars)
+  const templateVars = { users, userId: ""};
+  
+  if (templateVars.userId) {
+    res.redirect('/urls', templateVars);
   }
-  res.render('register', templateVars)
-})
 
+  res.render('register', templateVars);
+});
 
 app.post('/register', (req, res) => {
   
   const newUser = createNewUser(users, req.body);
 
   if (newUser.errStatus) {
-    res.send(newUser.errMsg, newUser.errStatus)
+    res.send(newUser.errMsg, newUser.errStatus);
   }
 
   const user_id = newUser.id;
   users[user_id] = newUser.newUser;
-  req.session.user_id = user_id
+  req.session.user_id = user_id;
   res.redirect('/urls');
-})
+});
 
 //Login Form
 
 app.get('/login', (req, res) => {
-  templateVars = { 
-    id: req.params.id, 
-    urlDatabase: urlDatabase,   
+  const templateVars = {
+    id: req.params.id,
+    urlDatabase: urlDatabase,
     userId: req.session.user_id,
     users
+  };
+
+  if (templateVars.userId) {
+    res.redirect('/urls', templateVars);
   }
-  if(templateVars.userId) {
-    res.redirect('/urls', templateVars)
-  }
-  res.render('login', templateVars)
-})
+
+  res.render('login', templateVars);
+});
 
 app.post('/login', (req, res) => {
-  
   const password = req.body.password;
   const email = req.body.email;
-  const foundUser = returnIdFromEmail(users, email)
-  const savedPassword = users[foundUser].password
+  const foundUser = returnIdFromEmail(users, email);
+  const savedPassword = users[foundUser].password;
 
   const checkPassword = bcrypt.compareSync(password, savedPassword);
 
-  if (!email || !password){
-    return res.status(400).send("Please provide an email and password.")
+  if (!email || !password) {
+    return res.status(400).send("Please provide an email and password.");
   }
 
-  if (!foundUser){
-    return res.status(400).send("No user with that email found")
+  if (!foundUser) {
+    return res.status(400).send("No user with that email found");
   }
 
-  if (!checkPassword){
-    return res.status(400).send("Incorrect password")
+  if (!checkPassword) {
+    return res.status(400).send("Incorrect password");
   }
 
   req.session.user_id = foundUser;
   res.redirect('/urls');
-;})
+});
 
 /////
 
 // updates specified URL
 
 app.post('/urls/:id/', (req, res) => {
+  const auth = authenticated(req.session.user_id);
+  const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
 
-  const auth = authenticated(req.session.user_id)
-  const owned = ownedBy(req.params.id, req.session.user_id)
-
-  if (auth.errMsg){
-    res.status(auth.errStatus).send(auth.errMsg).end()
+  if (auth.errMsg) {
+    res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
-  if (owned.errMsg){
-    res.status(owned.errStatus).send(owned.errMsg).end()
+  if (owned.errMsg) {
+    res.status(owned.errStatus).send(owned.errMsg).end();
   }
 
   const { longURL } = req.body;
   const { id } = req.params;
 
   urlDatabase[id].longURL = longURL;
-  res.redirect('/urls')
-})
+  res.redirect('/urls');
+});
 
 app.get('/u/:id', (req,res) => {
-  let longURL = urlDatabase[req.params.id].longURL
+  let longURL = urlDatabase[req.params.id].longURL;
   if (!longURL.startsWith('http')) {
     longURL = `http://${longURL}`;
   }

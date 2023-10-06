@@ -15,6 +15,6 @@ const urlDatabase = {
     longURL: "https://www.google.ca",
     userID: 'userRandomID'
   },
-}
+};
 
-module.exports = { urlDatabase }
+module.exports = { urlDatabase };

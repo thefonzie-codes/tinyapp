@@ -32,7 +32,7 @@ const urlDatabase = {
     longURL: "https://www.google.ca",
     userID: 'userRandomID'
   },
-}
+};
 
 //
 
@@ -41,12 +41,12 @@ const generateRandomString = () => Math.random().toString(36).slice(2, 8);
 const returnIdFromEmail = (obj, email) => {
   
   for (let id in obj) {
-    if (obj[id].email === email){
+    if (obj[id].email === email) {
       return obj[id].id;
     }
   }
   return undefined;
-}
+};
 
 const createNewUser = (obj, input) => {
 
@@ -55,17 +55,17 @@ const createNewUser = (obj, input) => {
 
 
   if (!email) {
-    return { errStatus: 403, errMsg: 'Email required', id:{}, newUser:{} }
-  };
+    return { errStatus: 403, errMsg: 'Email required', id:{}, newUser:{} };
+  }
   
   if (!password) {
-    return { errStatus: 403, errMsg: 'Password Required', id:{}, newUser:{} }
-  };
+    return { errStatus: 403, errMsg: 'Password Required', id:{}, newUser:{} };
+  }
 
   for (let id in obj) {
     const existingEmail = obj[id].email;
     if (existingEmail === email) {
-    return { errStatus: 403, errMsg: 'Email already in use', id:{}, newUser:{} }
+      return { errStatus: 403, errMsg: 'Email already in use', id:{}, newUser:{} };
     }
   }
 
@@ -74,59 +74,74 @@ const createNewUser = (obj, input) => {
     newId,
     email,
     password
-  }
+  };
 
-  return { errStatus: null, errMsg: null, id: newId, newUser }
+  return { errStatus: null, errMsg: null, id: newId, newUser };
 };
 
 const shortUrlExists = (obj, input) => {
 
   for (let each in obj) {
     if (each === input) {
-    return { errStatus: null, errMsg: null, id: input }
+      return { errStatus: null, errMsg: null, id: input };
     }
   }
-  return { errStatus: 403, errMsg: 'Short URL does not exist.', id: input }
-}
+  return { errStatus: 403, errMsg: 'Short URL does not exist.', id: input };
+};
 
 
 const authenticated = (input) => {
   if (input) {
-    return { errStatus: null, errMsg: null, id: input }
-  };
+    return { errStatus: null, errMsg: null, id: input };
+  }
 
-  return { errStatus: 403, errMsg: 'Only registered users can perform this action. Please log in.', id: input }
+  return { errStatus: 403, errMsg: 'Only registered users can perform this action. Please log in.', id: input };
 };
 
-const ownedBy = (urlId, userId) => {
-  if (urlDatabase[urlId].userID === userId){
-    return { errStatus: null, errMsg: null, id: userId }
+const ownedBy = (obj ,urlId, loginId) => {
+  if (obj[urlId].userID === loginId) {
+    return { errStatus: null, errMsg: null, id: loginId };
   }
-  return { errStatus: 403, errMsg: 'Only the owner can edit the URL', id: userId }
-}
+  return { errStatus: 403, errMsg: 'Only the owner can edit the URL', id: loginId };
+};
 
 
-const login = (obj, input) => {
+// const login = (obj, input) => {
 
-  const id = returnIdFromEmail(obj, input.email);
+//   const id = returnIdFromEmail(obj, input.email);
   
-  if (!id) {
-    return { errStatus: 403, errMsg: 'Email does not match any current user', id}
+//   if (!id) {
+//     return { errStatus: 403, errMsg: 'Email does not match any current user', id};
+//   }
+
+//   const userPassword = obj[id].password;
+//   const password = input.password;
+
+//   if (!password) {
+//     return { errStatus: 403, errMsg: 'Password required', id};
+//   }
+
+//   if (userPassword !== inputPassword) {
+//     return { errStatus: 403, errMsg: 'Username/password incorrect', id};
+//   }
+
+//   return { errStatus: null, errMsg: null, id };
+// };
+
+
+const ownedUrls = (urlDatabase, userId) => {
+  const owned = {};
+
+  for (let id in urlDatabase) {
+    const urlUserId = urlDatabase[id].userID;
+    if (userId === urlUserId) {
+      owned[id] = {
+        id,
+        ...urlDatabase[id]
+      };
+    }
   }
+  return owned;
+};
 
-  const userPassword = obj[id].password;
-  const password = input.password;
-
-  if (!password) {
-    return { errStatus: 403, errMsg: 'Password required', id}
-  }
-
-  if (userPassword !== inputPassword) {
-    return { errStatus: 403, errMsg: 'Username/password incorrect', id}
-  }
-
-  return { errStatus: null, errMsg: null, id }
-}
-
-
-module.exports = { generateRandomString, createNewUser, returnIdFromEmail, login, shortUrlExists, authenticated, ownedBy }
+module.exports = { generateRandomString, createNewUser, returnIdFromEmail, shortUrlExists, authenticated, ownedBy, ownedUrls };
