@@ -177,7 +177,6 @@ app.post('/login', (req, res) => {
   }
 
   const savedPassword = users[foundUser].password;
-  console.log(users[foundUser].password)
   const checkPassword = bcrypt.compareSync(password, savedPassword);
 
   if (!checkPassword) {
