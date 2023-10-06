@@ -42,10 +42,9 @@ const returnIdFromEmail = (obj, email) => {
   
   for (let id in obj) {
     if (obj[id].email === email) {
-      return obj[id].id;
+      return id;
     }
   }
-  return undefined;
 };
 
 const createNewUser = (obj, input) => {
@@ -72,9 +71,9 @@ const createNewUser = (obj, input) => {
 
   const newId = generateRandomString();
   const newUser = input[newId] = {
-    newId,
+    id: newId,
     email,
-    hashedPassword
+    password: hashedPassword
   };
 
   return { errStatus: null, errMsg: null, id: newId, newUser };

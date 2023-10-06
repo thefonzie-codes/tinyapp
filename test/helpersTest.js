@@ -3,22 +3,22 @@ const { assert } = require('chai');
 const { returnIdFromEmail } = require('../helpers.js');
 
 const testUsers = {
-  "userRandomID": {
+  xlt42x: {
+    id: "xlt42x",
+    email: "123@123.com",
+    password: "3046",
+  },
+  userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "purple-monkey-dinosaur",
   }
 };
 
 describe('returnIdFromEmail', function() {
   it('should return a user with valid email', function() {
-    const user = returnIdFromEmail(testUsers, "user@example.com");
-    const expectedUserID = "userRandomID";
+    const user = returnIdFromEmail(testUsers, "123@123.com");
+    const expectedUserID = "xlt42x";
     assert.strictEqual(user, expectedUserID);
   });
 

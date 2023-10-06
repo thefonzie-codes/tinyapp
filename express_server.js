@@ -50,12 +50,16 @@ app.get('/urls/new', (req,res) => {
 });
 
 app.post('/urls', (req, res) => {
+
+  if(!req.body.longURL){
+    res.send("Field cannot be blank");
+  }
   
   if (!req.session.user_id) {
     res.send("You cannot shorten URLs without being logged in.");
   }
 
-  const longURL = req.body.longURL; //
+  const longURL = req.body.longURL; 
   const urlId = generateRandomString();
   urlDatabase[urlId] = { longURL, userID: req.session.user_id };
   res.redirect(`/urls/${urlId}`);
@@ -108,8 +112,14 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
+app.get('/logout', (req, res) => {
+  res.clearCookie('user_id', 'user_id.sig');
+  res.redirect('/login');
+});
+
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id', 'user_id.sig');
+  console.log(users)
   res.redirect('/login');
 });
 
@@ -169,6 +179,7 @@ app.post('/login', (req, res) => {
   }
 
   const savedPassword = users[foundUser].password;
+  console.log(users[foundUser].password)
   const checkPassword = bcrypt.compareSync(password, savedPassword);
 
   if (!checkPassword) {
