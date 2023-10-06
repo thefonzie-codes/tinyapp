@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.use(cookieSession({
   name: 'user_id',
-  keys: ['jkasdhfjka', "1ifai4w532", "41234jfa"]
+  keys: ['jkasdhfjka', "1ifai4w532", "41234jfa"],
 }));
 
 app.get('/', (req, res) => {
@@ -26,7 +26,7 @@ app.get('/urls', (req, res) => {
   const auth = authenticated(req.session.user_id);
 
   if (auth.errMsg) {
-    res.status(auth.errStatus).send(auth.errMsg).end();
+    return res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
   const templateVars = {
@@ -39,7 +39,7 @@ app.get('/urls', (req, res) => {
 
 app.get('/urls/new', (req,res) => {
   if (!req.session.user_id) {
-    res.redirect('/login');
+    return res.redirect('/login');
   }
   const templateVars = {
     urls: urlDatabase,
@@ -52,11 +52,11 @@ app.get('/urls/new', (req,res) => {
 app.post('/urls', (req, res) => {
 
   if(!req.body.longURL){
-    res.send("Field cannot be blank");
+    return res.send("Field cannot be blank");
   }
   
   if (!req.session.user_id) {
-    res.send("You cannot shorten URLs without being logged in.");
+    return res.send("You cannot shorten URLs without being logged in.");
   }
 
   const longURL = req.body.longURL; 
@@ -70,18 +70,18 @@ app.get('/urls/:id', (req,res) => {
   const exists = shortUrlExists(urlDatabase, req.params.id);
 
   if (exists.errMsg) {
-    res.status(exists.errStatus).send(exists.errMsg).end();
+    return res.status(exists.errStatus).send(exists.errMsg).end();
   }
 
   const auth = authenticated(req.session.user_id);
   const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
 
   if (auth.errMsg) {
-    res.status(auth.errStatus).send(auth.errMsg).end();
+    return res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
   if (owned.errMsg) {
-    res.status(owned.errStatus).send(owned.errMsg).end();
+    return res.status(owned.errStatus).send(owned.errMsg).end();
   }
 
   const templateVars = {
@@ -93,18 +93,16 @@ app.get('/urls/:id', (req,res) => {
   res.render('urls_show', templateVars);
 });
 
-// deletes the specified url
-
 app.post('/urls/:id/delete', (req, res) => {
   const auth = authenticated(req.session.user_id);
   const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
 
   if (auth.errMsg) {
-    res.status(auth.errStatus).send(auth.errMsg).end();
+    return res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
   if (owned.errMsg) {
-    res.status(owned.errStatus).send(owned.errMsg).end();
+    return res.status(owned.errStatus).send(owned.errMsg).end();
   }
 
   const { id } = req.params;
@@ -112,21 +110,21 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
+
 app.get('/logout', (req, res) => {
-  res.clearCookie('user_id', 'user_id.sig');
+  req.session = null;
   res.redirect('/login');
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id', 'user_id.sig');
-  console.log(users)
+  req.session = null;
   res.redirect('/login');
 });
 
 
 app.get('/register', (req, res) => {
   if (req.session.user_id) {
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
   
   const templateVars = { users, userId: ""};
@@ -139,7 +137,7 @@ app.post('/register', (req, res) => {
   const newUser = createNewUser(users, req.body);
 
   if (newUser.errStatus) {
-    res.send(newUser.errMsg, newUser.errStatus);
+    return res.send(newUser.errMsg, newUser.errStatus);
   }
 
   const user_id = newUser.id;
@@ -159,7 +157,7 @@ app.get('/login', (req, res) => {
   };
 
   if (templateVars.userId) {
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
 
   res.render('login', templateVars);
@@ -197,11 +195,11 @@ app.post('/urls/:id/', (req, res) => {
   const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
 
   if (auth.errMsg) {
-    res.status(auth.errStatus).send(auth.errMsg).end();
+    return res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
   if (owned.errMsg) {
-    res.status(owned.errStatus).send(owned.errMsg).end();
+    return res.status(owned.errStatus).send(owned.errMsg).end();
   }
 
   const { longURL } = req.body;
