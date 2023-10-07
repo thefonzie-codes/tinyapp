@@ -223,10 +223,14 @@ app.post('/urls/:id/', (req, res) => {
     return res.status(owned.errStatus).send(owned.errMsg).end();
   }
 
-  const { longURL } = req.body;
+  let { longURL } = req.body;
   const { id } = req.params;
 
+  if (!longURL.startsWith('http')) {
+    longURL = `http://${longURL}`;
+  }
   urlDatabase[id].longURL = longURL;
+
   res.redirect('/urls');
 });
 
@@ -234,9 +238,11 @@ app.post('/urls/:id/', (req, res) => {
 
 app.get('/u/:id', (req,res) => {
   let longURL = urlDatabase[req.params.id].longURL;
+
   if (!longURL.startsWith('http')) {
     longURL = `http://${longURL}`;
   }
+
   res.redirect(`${longURL}`);
 });
 
