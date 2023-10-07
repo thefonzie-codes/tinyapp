@@ -90,23 +90,22 @@ app.get('/urls/new', (req,res) => {
 
 app.get('/urls/:id', (req,res) => {
   
-  const auth = authenticated(req.session.user_id);
-  const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
-
+  const exists = shortUrlExists(urlDatabase, req.params.id);
+  
+  if (exists.errMsg) {
+    return res.status(exists.errStatus).send(exists.errMsg).end();
+  }
+  
   if (auth.errMsg) {
     return res.status(auth.errStatus).send(auth.errMsg).end();
   }
 
+  const auth = authenticated(req.session.user_id);
+  const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
+
   if (owned.errMsg) {
     return res.status(owned.errStatus).send(owned.errMsg).end();
   }
-  
-  const exists = shortUrlExists(urlDatabase, req.params.id);
-
-  if (exists.errMsg) {
-    return res.status(exists.errStatus).send(exists.errMsg).end();
-  }
-
 
   const templateVars = {
     id: req.params.id,
