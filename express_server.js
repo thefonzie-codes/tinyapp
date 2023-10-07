@@ -91,12 +91,14 @@ app.get('/urls/new', (req,res) => {
 app.get('/urls/:id', (req,res) => {
   
   const exists = shortUrlExists(urlDatabase, req.params.id);
-  const auth = authenticated(req.session.user_id);
-  const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
-  
+
   if (exists.errMsg) {
     return res.status(exists.errStatus).send(exists.errMsg).end();
   }
+  
+  const auth = authenticated(req.session.user_id);
+  const owned = ownedBy(urlDatabase, req.params.id, req.session.user_id);
+  
   
   if (auth.errMsg) {
     return res.status(auth.errStatus).send(auth.errMsg).end();
@@ -127,13 +129,13 @@ app.post('/urls', (req, res) => {
     return res.send("Field cannot be blank");
   }
   
-  const longURL = req.body.longURL;
+  let longURL = req.body.longURL;
   const urlId = generateRandomString();
 
   if (!longURL.startsWith('http')) {
     longURL = `http://${longURL}`;
   }
-  
+
   urlDatabase[urlId] = { longURL, userID: req.session.user_id };
   res.redirect(`/urls/${urlId}`);
 });
@@ -242,6 +244,13 @@ app.post('/urls/:id/', (req, res) => {
 // Redirects the user to the appropriate LongURL - 'http://' not required - it will force it if it does not exist
 
 app.get('/u/:id', (req,res) => {
+
+  const exists = shortUrlExists(urlDatabase, req.params.id);
+
+  if (exists.errMsg) {
+    return res.status(exists.errStatus).send(exists.errMsg).end();
+  }
+
   let longURL = urlDatabase[req.params.id].longURL;
 
   if (!longURL.startsWith('http')) {
