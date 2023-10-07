@@ -5,7 +5,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 ## Final Product
 
 !["Screenshot of the Login page"](https://github.com/thefonzie-codes/tinyapp/blob/master/docs/tinyapp_login.png?raw=true)
-!["Screenshot of the /urls page"](https://github.com/thefonzie-codes/tinyapp/blob/master/docs/tinyapp_urls_page.png?raw=true)
+!["Screenshot of the /urls page"](https://github.com/thefonzie-codes/tinyapp/blob/master/docs/tinyapp_urls_updated.png)
 !["Screenshot of the edit/update page"](https://github.com/thefonzie-codes/tinyapp/blob/master/docs/tinyapp_url_edit.png?raw=true)
 
 ## Dependencies
