@@ -129,6 +129,11 @@ app.post('/urls', (req, res) => {
   
   const longURL = req.body.longURL;
   const urlId = generateRandomString();
+
+  if (!longURL.startsWith('http')) {
+    longURL = `http://${longURL}`;
+  }
+  
   urlDatabase[urlId] = { longURL, userID: req.session.user_id };
   res.redirect(`/urls/${urlId}`);
 });
